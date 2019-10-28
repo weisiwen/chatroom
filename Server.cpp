@@ -154,12 +154,51 @@ void Server::Start()
 			//新用户连接
 			if(sockfd == listener)
 			{
-				struct sockaddr_in_client_address;
+				struct sockaddr_in client_address;
+				socklen_t client_addrLength = sizeof(struct sockaddr_in);
+				int clientfd = accept(listener, (struct sockaddr*)&client_address, &client_addrLength);
 				
+				cout << "client connection from: "
+					<<	inet_ntoa(client_address.sin_addr) << ":"
+					<<	ntohs(client_address.sin_port) << ", clientfd = "
+					<< clientfd << endl;
+				
+				addfd(epfd, clientfd, true);
+				
+				// 服务端用list保存用户连接
+				clients_list.push_back(clientfd);
+				cout << "Add new clientfd = " << clientfd << " to epoll" << endl;
+				cout << "Now there are " << clients_list.size() << " clients int the chat room" << endl;
+				
+				// 服务端发送欢迎消息
+				cout << "welcome message" << endl;
+				char message[BUF_SIZE];
+				bzero(message, BUF_SIZE);
+				sprintf(message, SERVER_WELCOME, clientfd);
+				int ret = send(clientfd, message, BUF_SIZE, 0);
+				if (ret < 0)
+				{
+					perror("send error");
+					Close();
+					exit(-1);
+				}
+			}
+			
+			//处理用户发来的消息，并广播，使其他用户收到消息
+			else
+			{
+				int ret = SendBroadcastMessage(sockfd);
+				if (ret < 0)
+				{
+					perror("error");
+					Close();
+					exit(-1);
+				}
 			}
 		}
 		
-		
 	}
+	//关闭服务
+	Close();
 }
 

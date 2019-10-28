@@ -19,6 +19,6 @@ private:
 	int pipe_fd[2];
 	bool isClientwork;
 	char message[BUF_SIZE,];
-	struct sockaddr_in serverAdr;
+	struct sockaddr_in serverAddr;
 	
 };
